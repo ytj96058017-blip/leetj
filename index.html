@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포커스 타워 디펜스 - 중1 수학 실시간 팀전</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Jua', 'Inter', sans-serif; }
+        .tower-bg { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); }
+        .pulse-glow { animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(234, 179, 8, 0.8); }
+        }
+    </style>
+</head>
+<body class="tower-bg text-white min-h-screen flex flex-col justify-between p-4 md:p-8">
+
+    <header class="text-center mb-4">
+        <h1 class="text-3xl md:text-5xl font-bold text-yellow-400 drop-shadow-lg mb-2">🏰 포커스 타워 디펜스</h1>
+        <p class="text-sm md:text-base text-indigo-200">중학교 1학년 일차방정식 협동 파이프라인 팀전</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto flex-1 flex flex-col justify-center">
+
+        <div id="lobby-screen" class="bg-indigo-900/80 border border-indigo-700 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
+            <h2 class="text-2xl font-bold mb-6 text-center text-yellow-300">⚔️ 배틀룸 입장 및 팀 설정</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-indigo-200">내 닉네임</label>
+                    <input type="text" id="player-name" placeholder="예: 수학천재 홍길동" class="w-full px-4 py-3 rounded-xl bg-indigo-950 border border-indigo-600 text-white focus:outline-none focus:border-yellow-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-indigo-200">배틀룸(방) 코드 (비밀번호)</label>
+                    <input type="text" id="room-code" placeholder="예: class1" class="w-full px-4 py-3 rounded-xl bg-indigo-950 border border-indigo-600 text-white focus:outline-none focus:border-yellow-400">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <button onclick="joinTeam('alpha')" class="py-4 rounded-2xl font-bold text-lg bg-blue-600 hover:bg-blue-500 transition shadow-lg border-2 border-blue-400 flex items-center justify-center gap-2">
+                    🔵 알파 팀 입장하기
+                </button>
+                <button onclick="joinTeam('beta')" class="py-4 rounded-2xl font-bold text-lg bg-red-600 hover:bg-red-500 transition shadow-lg border-2 border-red-400 flex items-center justify-center gap-2">
+                    🔴 베타 팀 입장하기
+                </button>
+            </div>
+            
+            <div id="lobby-status" class="text-center text-sm text-yellow-300 font-semibold h-6">같은 방 코드를 입력하고 원하는 팀으로 들어가세요!</div>
+        </div>
+
+        <div id="battle-screen" class="hidden flex flex-col gap-6">
+            
+            <!-- HP & Status Board -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-950/90 p-5 rounded-3xl border border-indigo-800 shadow-xl">
+                <!-- Alpha Team Info -->
+                <div class="flex flex-col gap-2 p-3 rounded-2xl bg-blue-950/40 border border-blue-500/30">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-blue-400 text-base">🔵 알파 팀 성벽</span>
+                        <span id="alpha-hp-text" class="text-blue-300">100 / 100</span>
+                    </div>
+                    <div class="w-full bg-indigo-950 rounded-full h-4 overflow-hidden border border-blue-500/50">
+                        <div id="alpha-hp-bar" class="bg-blue-500 h-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                    <div id="alpha-members" class="text-xs text-blue-200 mt-1">대원: 없음</div>
+                </div>
+
+                <!-- Beta Team Info -->
+                <div class="flex flex-col gap-2 p-3 rounded-2xl bg-red-950/40 border border-red-500/30">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-red-400 text-base">🔴 베타 팀 성벽</span>
+                        <span id="beta-hp-text" class="text-red-300">100 / 100</span>
+                    </div>
+                    <div class="w-full bg-indigo-950 rounded-full h-4 overflow-hidden border border-red-500/50">
+                        <div id="beta-hp-bar" class="bg-red-500 h-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                    <div id="beta-members" class="text-xs text-red-200 mt-1">대원: 없음</div>
+                </div>
+            </div>
+
+            <div class="bg-indigo-900/90 border border-indigo-700 rounded-3xl p-6 md:p-8 shadow-2xl flex flex-col items-center text-center pulse-glow">
+                
+                <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
+                    <span id="my-team-badge" class="text-xs px-4 py-1.5 rounded-full font-bold">소속 대기중</span>
+                    <span id="my-role-badge" class="text-xs px-4 py-1.5 bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 rounded-full font-bold">내 역할 배정중...</span>
+                </div>
+
+                <h3 class="text-xl font-bold text-yellow-300 mb-2">협동 일차방정식 파이프라인</h3>
+                <p class="text-xs md:text-sm text-indigo-200 mb-6">팀원들과 각 단계(이항, 정리, 최종 해)를 협력하여 순서대로 완성하고 포탄을 발사하세요!</p>
+
+                <!-- Pipeline Interactive Container -->
+                <div id="pipeline-box" class="w-full max-w-xl bg-indigo-950 border-2 border-yellow-500/50 rounded-2xl p-6 shadow-inner flex flex-col gap-4">
+                    <div id="problem-display" class="text-2xl md:text-3xl font-bold text-white mb-2">문제를 불러오는 중...</div>
+                    
+                    <!-- Dynamic Step Input Area -->
+                    <div id="step-container" class="flex flex-col items-center gap-3">
+                        <div id="step-instruction" class="text-sm font-semibold text-yellow-200">단계 설명</div>
+                        <div class="flex items-center justify-center gap-2">
+                            <input type="number" id="pipeline-input" placeholder="정답 입력" class="w-48 px-4 py-3 rounded-xl bg-indigo-900 border-2 border-yellow-400 text-white text-xl text-center focus:outline-none" onkeydown="if(event.key==='Enter') submitPipelineStep()">
+                            <button onclick="submitPipelineStep()" class="bg-yellow-500 hover:bg-yellow-400 text-indigo-950 font-bold px-6 py-3 rounded-xl transition shadow-md">단계 완료</button>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Progress Indicator -->
+                    <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-indigo-800 text-xs">
+                        <div id="stage-1-status" class="p-2 rounded-xl bg-indigo-900/60 border border-indigo-700 text-indigo-300">① 이항 (미지수 모으기)</div>
+                        <div id="stage-2-status" class="p-2 rounded-xl bg-indigo-900/60 border border-indigo-700 text-indigo-300">② 동류항 정리</div>
+                        <div id="stage-3-status" class="p-2 rounded-xl bg-indigo-900/60 border border-indigo-700 text-indigo-300">③ 최종 해 (x =)</div>
+                    </div>
+                </div>
+
+                <div id="battle-message" class="text-sm font-semibold text-emerald-400 h-6 mt-4"></div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="text-center text-xs text-indigo-400 mt-6">
+        중학교 1학년 수학 실시간 협동 팀전 웹앱 | Firebase 실시간 동기화
+    </footer>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-indigo-900 border border-indigo-600 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
+            <h4 id="modal-title" class="text-xl font-bold text-yellow-400 mb-2">알림</h4>
+            <p id="modal-message" class="text-sm text-indigo-100 mb-6">메시지 내용</p>
+            <button onclick="closeModal()" class="bg-yellow-500 hover:bg-yellow-400 text-indigo-950 font-bold px-6 py-2 rounded-xl transition">확인</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyChxrOzoTxFMy_BvkvNZLXAp1oRvN7Fb1g",
+            authDomain: "focus-tower-defense.firebaseapp.com",
+            projectId: "focus-tower-defense",
+            storageBucket: "focus-tower-defense.firebasestorage.app",
+            messagingSenderId: "519329169002",
+            appId: "1:519329169002:web:401534fe04b6ad39131413",
+            measurementId: "G-G2JRKQ2KXY"
+        };
+
+        let db = null;
+        let useFallback = false;
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            const auth = getAuth(app);
+            signInAnonymously(auth).catch(() => useFallback = true);
+        } catch (e) {
+            useFallback = true;
+        }
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'focus-tower-defense-default';
+        let currentUserName = '';
+        let currentRoomCode = '';
+        let myTeam = '';
+        let myRoleIndex = 0; 
+        let unsubscribeRoom = null;
+
+        const problemBank = [
+            { expr: "3x - 5 = x + 7", step1: 2, step2: 12, answer: 6 },
+            { expr: "5x - 3 = 2x + 9", step1: 3, step2: 12, answer: 4 },
+            { expr: "4x + 2 = 2x + 10", step1: 2, step2: 8, answer: 4 },
+            { expr: "6x - 4 = 3x + 8", step1: 3, step2: 12, answer: 4 }
+        ];
+
+        window.showAlert = function(title, message) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        };
+
+        let localState = {
+            alphaHp: 100,
+            betaHp: 100,
+            alphaMembers: [],
+            betaMembers: [],
+            pipelineStage: 0,
+            currentProblemIndex: 0,
+            currentProblem: problemBank[0]
+        };
+
+        window.joinTeam = async function(team) {
+            const nameInput = document.getElementById('player-name').value.trim();
+            const roomInput = document.getElementById('room-code').value.trim();
+
+            if (!nameInput) {
+                window.showAlert('입력 오류', '닉네임을 입력해주세요!');
+                return;
+            }
+            if (!roomInput) {
+                window.showAlert('입력 오류', '배틀룸 코드를 입력해주세요!');
+                return;
+            }
+
+            currentUserName = nameInput;
+            currentRoomCode = roomInput;
+            myTeam = team;
+
+            document.getElementById('lobby-status').innerText = "방 입장 중...";
+
+            try {
+                if (!useFallback && db) {
+                    const roomRef = doc(db, 'artifacts', appId, 'rooms', currentRoomCode);
+                    const roomSnap = await getDoc(roomRef);
+
+                    let roomData;
+                    if (!roomSnap.exists()) {
+                        roomData = {
+                            alphaHp: 100,
+                            betaHp: 100,
+                            alphaMembers: [],
+                            betaMembers: [],
+                            pipelineStage: 0,
+                            currentProblemIndex: 0,
+                            currentProblem: problemBank[0],
+                            updatedAt: Date.now()
+                        };
+                    } else {
+                        roomData = roomSnap.data();
+                    }
+
+                    roomData.alphaMembers = (roomData.alphaMembers || []).filter(m => m !== currentUserName);
+                    roomData.betaMembers = (roomData.betaMembers || []).filter(m => m !== currentUserName);
+
+                    if (team === 'alpha') {
+                        roomData.alphaMembers.push(currentUserName);
+                        myRoleIndex = (roomData.alphaMembers.length - 1) % 3;
+                    } else {
+                        roomData.betaMembers.push(currentUserName);
+                        myRoleIndex = (roomData.betaMembers.length - 1) % 3;
+                    }
+
+                    if (!roomSnap.exists()) {
+                        await setDoc(roomRef, roomData);
+                    } else {
+                        await updateDoc(roomRef, {
+                            alphaMembers: roomData.alphaMembers,
+                            betaMembers: roomData.betaMembers
+                        });
+                    }
+
+                    startRealtimeListener(roomRef);
+                } else {
+                    localState.alphaMembers = localState.alphaMembers.filter(m => m !== currentUserName);
+                    localState.betaMembers = localState.betaMembers.filter(m => m !== currentUserName);
+
+                    if (team === 'alpha') {
+                        localState.alphaMembers.push(currentUserName);
+                        myRoleIndex = (localState.alphaMembers.length - 1) % 3;
+                    } else {
+                        localState.betaMembers.push(currentUserName);
+                        myRoleIndex = (localState.betaMembers.length - 1) % 3;
+                    }
+                    updateUI(localState);
+                }
+
+                document.getElementById('lobby-screen').classList.add('hidden');
+                document.getElementById('battle-screen').classList.remove('hidden');
+
+                const badge = document.getElementById('my-team-badge');
+                if (team === 'alpha') {
+                    badge.innerText = "🔵 알파 팀";
+                    badge.className = "text-xs px-4 py-1.5 bg-blue-500/20 text-blue-300 border border-blue-500/40 rounded-full font-bold";
+                } else {
+                    badge.innerText = "🔴 베타 팀";
+                    badge.className = "text-xs px-4 py-1.5 bg-red-500/20 text-red-300 border border-red-500/40 rounded-full font-bold";
+                }
+
+                const roleBadge = document.getElementById('my-role-badge');
+                const roleNames = ["역할 ①: 이항 파트 담당", "역할 ②: 동류항 정리 담당", "역할 ③: 최종 해(x) 도출 담당"];
+                roleBadge.innerText = roleNames[myRoleIndex];
+
+            } catch (err) {
+                useFallback = true;
+                if (team === 'alpha') {
+                    if (!localState.alphaMembers.includes(currentUserName)) localState.alphaMembers.push(currentUserName);
+                } else {
+                    if (!localState.betaMembers.includes(currentUserName)) localState.betaMembers.push(currentUserName);
+                }
+                updateUI(localState);
+                document.getElementById('lobby-screen').classList.add('hidden');
+                document.getElementById('battle-screen').classList.remove('hidden');
+            }
+        };
+
+        function startRealtimeListener(roomRef) {
+            if (unsubscribeRoom) unsubscribeRoom();
+            unsubscribeRoom = onSnapshot(roomRef, (docSnap) => {
+                if (!docSnap.exists()) return;
+                updateUI(docSnap.data());
+            }, () => { useFallback = true; });
+        }
+
+        function updateUI(data) {
+            document.getElementById('alpha-hp-text').innerText = `${Math.max(0, data.alphaHp)} / 100`;
+            document.getElementById('alpha-hp-bar').style.width = `${Math.max(0, data.alphaHp)}%`;
+
+            document.getElementById('beta-hp-text').innerText = `${Math.max(0, data.betaHp)} / 100`;
+            document.getElementById('beta-hp-bar').style.width = `${Math.max(0, data.betaHp)}%`;
+
+            document.getElementById('alpha-members').innerText = `대원: ${(data.alphaMembers || []).join(', ') || '없음'}`;
+            document.getElementById('beta-members').innerText = `대원: ${(data.betaMembers || []).join(', ') || '없음'}`;
+
+            if (data.currentProblem) {
+                document.getElementById('problem-display').innerText = `방정식: ${data.currentProblem.expr}`;
+            }
+
+            const stage = data.pipelineStage !== undefined ? data.pipelineStage : 0;
+            const s1 = document.getElementById('stage-1-status');
+            const s2 = document.getElementById('stage-2-status');
+            const s3 = document.getElementById('stage-3-status');
+            const inst = document.getElementById('step-instruction');
+
+            s1.className = "p-2 rounded-xl " + (stage === 0 ? "bg-yellow-500/20 border border-yellow-400 text-yellow-300 font-bold animate-pulse" : "bg-indigo-900/60 border border-indigo-700 text-indigo-300");
+            s2.className = "p-2 rounded-xl " + (stage === 1 ? "bg-yellow-500/20 border border-yellow-400 text-yellow-300 font-bold animate-pulse" : "bg-indigo-900/60 border border-indigo-700 text-indigo-300");
+            s3.className = "p-2 rounded-xl " + (stage === 2 ? "bg-yellow-500/20 border border-yellow-400 text-yellow-300 font-bold animate-pulse" : "bg-indigo-900/60 border border-indigo-700 text-indigo-300");
+
+            if (stage === 0) {
+                inst.innerText = "【1단계: 이항】 미지수를 좌변으로 모을 때의 계수 합을 입력하세요 (예: 3x - x 이면 계수 2)";
+            } else if (stage === 1) {
+                inst.innerText = "【2단계: 동류항 정리】 우변의 상수항 값을 입력하세요";
+            } else if (stage === 2) {
+                inst.innerText = "【3단계: 최종 해】 방정식의 해 x 값을 입력하여 포탄 발사!";
+            }
+
+            if (data.alphaHp <= 0) {
+                window.showAlert('게임 종료', '🔴 베타 팀 승리! 알파 팀 성벽이 파괴되었습니다.');
+            } else if (data.betaHp <= 0) {
+                window.showAlert('게임 종료', '🔵 알파 팀 승리! 베타 팀 성벽이 파괴되었습니다.');
+            }
+        }
+
+        window.submitPipelineStep = async function() {
+            const val = parseFloat(document.getElementById('pipeline-input').value);
+            const msgEl = document.getElementById('battle-message');
+            if (isNaN(val)) {
+                window.showAlert('입력 오류', '숫자를 입력해주세요!');
+                return;
+            }
+
+            let currentState = useFallback ? localState : null;
+            if (!useFallback && db) {
+                const roomRef = doc(db, 'artifacts', appId, 'rooms', currentRoomCode);
+                const snap = await getDoc(roomRef);
+                if (snap.exists()) currentState = snap.data();
+            }
+
+            if (!currentState) return;
+            const stage = currentState.pipelineStage || 0;
+            const prob = currentState.currentProblem || problemBank[0];
+
+            let targetVal = 0;
+            if (stage === 0) targetVal = prob.step1;
+            else if (stage === 1) targetVal = prob.step2;
+            else if (stage === 2) targetVal = prob.answer;
+
+            if (val === targetVal) {
+                document.getElementById('pipeline-input').value = '';
+                msgEl.className = "text-sm font-semibold text-emerald-400 h-6 mt-4";
+                msgEl.innerText = `✨ ${stage + 1}단계 성공! 팀원들과 협동하여 진행 중...`;
+
+                let newStage = stage + 1;
+                let newAlphaHp = currentState.alphaHp;
+                let newBetaHp = currentState.betaHp;
+                let nextProb = prob;
+
+                if (newStage > 2) {
+                    newStage = 0;
+                    nextProb = problemBank[Math.floor(Math.random() * problemBank.length)];
+                    if (myTeam === 'alpha') {
+                        newBetaHp = Math.max(0, currentState.betaHp - 25);
+                        msgEl.innerText = "🎯 파이프라인 완성! 강력한 포탄이 베타 팀 성벽을 타격했습니다!";
+                    } else {
+                        newAlphaHp = Math.max(0, currentState.alphaHp - 25);
+                        msgEl.innerText = "🎯 파이프라인 완성! 강력한 포탄이 알파 팀 성벽을 타격했습니다!";
+                    }
+                }
+
+                if (!useFallback && db) {
+                    const roomRef = doc(db, 'artifacts', appId, 'rooms', currentRoomCode);
+                    await updateDoc(roomRef, {
+                        pipelineStage: newStage,
+                        alphaHp: newAlphaHp,
+                        betaHp: newBetaHp,
+                        currentProblem: nextProb,
+                        updatedAt: Date.now()
+                    });
+                } else {
+                    localState.pipelineStage = newStage;
+                    localState.alphaHp = newAlphaHp;
+                    localState.betaHp = newBetaHp;
+                    localState.currentProblem = nextProb;
+                    updateUI(localState);
+                }
+
+            } else {
+                msgEl.className = "text-sm font-semibold text-rose-400 h-6 mt-4";
+                msgEl.innerText = "❌ 단계 값 계산이 틀렸습니다! 다시 확인하세요.";
+            }
+        };
+    </script>
+</body>
+</html>
